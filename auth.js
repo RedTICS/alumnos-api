@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
-
-// const SECRET = 'CLAVE_SUPER_SECRETA';
+const { SECRET } = require('./config');
 
 function verifyToken(req, res, next) {
     const authHeader = req.headers['authorization'];
@@ -11,7 +10,7 @@ function verifyToken(req, res, next) {
 
     try {
         const decoded = jwt.verify(token, SECRET);
-        req.user = decoded; // opcional
+        req.user = decoded;
         next();
     } catch (err) {
         return res.status(401).json({ error: 'Invalid token' });
