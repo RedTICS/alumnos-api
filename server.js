@@ -34,16 +34,15 @@ app.get('/api/alumnos/:dni', verifyToken, async (req, res) => {
     try {
         const { dni } = req.params;
         const dniInt = parseInt(dni, 10);
-        if (isNaN(dniInt)) {
-            return res.status(400).json({ error: 'DNI debe ser un número' });
+        if (!Number.isInteger(dniInt)) {
+            return res.status(400).json({ error: 'DNI debe ser un número entero' });
         }
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('dni', sql.Int, dni)
+            .input('dni', sql.Int, dniInt)
             .query('SELECT * FROM Alumnos WHERE DNI = @dni');
         res.json(result.recordset[0]);
     } catch (err) {
-        console.error(err);
         res.status(500).json({ error: 'Error al obtener alumno' });
     }
 });
