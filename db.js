@@ -1,19 +1,7 @@
 const sql = require('mssql');
+const { CONNSQL } = require('./config');
 
-const config = {
-    user: 'sa',
-    password: 'salocal',
-    server: 'localhost',   // ejemplo: localhost o IP
-    port: 57374,
-    database: 'Alumnos',
-    options: {
-        // trustedConnection: true,
-        encrypt: false,
-        trustServerCertificate: true
-    }
-};
-
-const poolPromise = new sql.ConnectionPool(config)
+const poolPromise = new sql.ConnectionPool(CONNSQL)
     .connect()
     .then(pool => {
         console.log('✅ Conectado a SQL Server');
