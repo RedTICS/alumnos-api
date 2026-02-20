@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { poolPromise, sql } = require('./db');
+const { poolPromise, sql, log } = require('./db');
 const { CONFIG, PASSWORDS, SECRET } = require('./config');
 const jwt = require('jsonwebtoken');
 const verifyToken = require('./auth.js');
@@ -20,10 +20,12 @@ app.post('/api/login', (req, res) => {
     if (username && password) {
         if (username === 'consulta' && password === PASSWORDS.passConsulta) {
             const token = jwt.sign({ username, role: 'read' }, SECRET, { expiresIn: '4h' });
+            log(username, 'login exitoso');
             return res.json({ token });
         }
         if (username === 'carga' && password === PASSWORDS.passCarga) {
             const token = jwt.sign({ username, role: 'write' }, SECRET, { expiresIn: '4h' });
+            log(username, 'login exitoso');
             return res.json({ token });
         }
     }
@@ -47,19 +49,24 @@ app.get('/api/alumnos/:dni', verifyToken, async (req, res) => {
     }
 });
 
-app.put('/api/alumnos/:id', async (req, res) => {
+app.put('/api/alumnos/:dni', verifyToken, async (req, res) => {
     try {
-        const { id } = req.params;
+        const { dni } = req.params;
+        const dniInt = parseInt(dni, 10);
+        if (!Number.isInteger(dniInt)) {
+            return res.status(400).json({ error: 'DNI debe ser un número entero' });
+        }
         const { esquema_completo } = req.body;
         const pool = await poolPromise;
         await pool.request()
-            .input('id', sql.Int, id)
+            .input('dni', sql.Int, dniInt)
             .input('esquema_completo', sql.Bit, esquema_completo)
             .query(`
                 UPDATE Alumnos
                    SET esquema_completo = @esquema_completo
-                WHERE id = @id
+                WHERE Dni = @dni
             `);
+        log(req.user.username, 'Actualiz. DNI: ' + dniInt + '. esquema_completo: ' + esquema_completo);
         res.json({ success: true });
     } catch (err) {
         console.error(err);
