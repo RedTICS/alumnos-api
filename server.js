@@ -18,14 +18,15 @@ app.use(express.json());
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     if (username && password) {
+        const ip = getIp(req);
         if (username === 'consulta' && password === PASSWORDS.passConsulta) {
             const token = jwt.sign({ username, role: 'read' }, SECRET, { expiresIn: '4h' });
-            log(username, 'login exitoso');
+            log(username, ip, 'login exitoso');
             return res.json({ token });
         }
         if (username === 'carga' && password === PASSWORDS.passCarga) {
             const token = jwt.sign({ username, role: 'write' }, SECRET, { expiresIn: '4h' });
-            log(username, 'login exitoso');
+            log(username, ip, 'login exitoso');
             return res.json({ token });
         }
     }
@@ -36,6 +37,7 @@ app.get('/api/alumnos/:dni', verifyToken, async (req, res) => {
     try {
         const { dni } = req.params;
         const dniInt = parseInt(dni, 10);
+        const ip = getIp(req);
         if (!Number.isInteger(dniInt)) {
             return res.status(400).json({ error: 'DNI debe ser un número entero' });
         }
@@ -43,6 +45,7 @@ app.get('/api/alumnos/:dni', verifyToken, async (req, res) => {
         const result = await pool.request()
             .input('dni', sql.Int, dniInt)
             .query('SELECT * FROM Alumnos WHERE DNI = @dni');
+        log(req.user.username, ip, 'Consulta DNI: ' + dniInt);
         res.json(result.recordset[0]);
     } catch (err) {
         res.status(500).json({ error: 'Error al obtener alumno' });
@@ -53,6 +56,7 @@ app.put('/api/alumnos/:dni', verifyToken, async (req, res) => {
     try {
         const { dni } = req.params;
         const dniInt = parseInt(dni, 10);
+        const ip = getIp(req);
         if (!Number.isInteger(dniInt)) {
             return res.status(400).json({ error: 'DNI debe ser un número entero' });
         }
@@ -66,12 +70,15 @@ app.put('/api/alumnos/:dni', verifyToken, async (req, res) => {
                    SET esquema_completo = @esquema_completo
                 WHERE Dni = @dni
             `);
-        log(req.user.username, 'Actualiz. DNI: ' + dniInt + '. esquema_completo: ' + esquema_completo);
+        log(req.user.username, ip, 'Actualiz. DNI: ' + dniInt + '. esquema_completo: ' + esquema_completo);
         res.json({ success: true });
     } catch (err) {
-        console.error(err);
         res.status(500).json({ error: 'Error al actualizar alumno' });
     }
 });
+
+function getIp(req) {
+    return req.headers['x-forwarded-for']?.split(',').shift() || req.socket.remoteAddress;
+}
 
 app.listen(PORT, () => console.log(`Servidor corriendo en ${CONFIG.API_URL}:${CONFIG.API_PORT}`));

@@ -11,15 +11,16 @@ const poolPromise = new sql.ConnectionPool(CONNSQL)
         console.log('❌ Error de conexión: ', err);
     });
 
-const log = async (user, action) => {
+const log = async (user, ip, action) => {
     try {
         const pool = await poolPromise;
         await pool.request()
             .input('Usuario', sql.VarChar, user)
             .input('Accion', sql.VarChar, action)
+            .input('Ip', sql.VarChar, ip)
             .query(`
-                INSERT INTO Registro (Usuario, Accion)
-                VALUES (@Usuario, @Accion)
+                INSERT INTO Registro (Usuario, Accion, Ip)
+                VALUES (@Usuario, @Accion, @Ip)
             `);
         return true;
     } catch (err) {
