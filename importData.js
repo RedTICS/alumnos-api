@@ -1,9 +1,6 @@
 const XLSX = require('xlsx');
 const path = require('path');
-const dayjs = require('dayjs');
-// import { sql, poolPromise } from './db';  // tu db.js con mssql
 const { poolPromise, sql } = require('./db');
-// Ruta del archivo Excel
 const filePath = path.join(__dirname, 'Cruce_vacunas_kits_escolares.xlsx');
 
 async function importarAlumnos() {
@@ -16,15 +13,11 @@ async function importarAlumnos() {
     const sheet = workbook.Sheets[sheetName];
 
     // Convertir a JSON
-    //const alumnos = XLSX.utils.sheet_to_json(sheet);
     const alumnos = XLSX.utils.sheet_to_json(sheet, { raw: false });
 
     let count = 0;
 
     for (const alumno of alumnos) {
-      // Convertir fecha DD-MM-YYYY -> YYYY-MM-DD
-      //const fechaFormateada = dayjs(alumno.Fecha_Nacimiento, 'DD-MM-YYYY').format('YYYY-MM-DD');
-
       // Insertar o actualizar en SQL Server
       await pool.request()
         .input('dni', sql.Int, alumno.DNI)
